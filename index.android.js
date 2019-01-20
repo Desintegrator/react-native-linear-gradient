@@ -1,45 +1,53 @@
-/**
- * @providesModule LinearGradient
- * @flow
- */
+// @flow
 import React, { Component } from 'react';
-import { processColor, StyleSheet, View } from 'react-native';
-
-import NativeLinearGradient, { type Props } from './common';
+import PropTypes from 'prop-types';
+import { processColor, requireNativeComponent, PointPropType, StyleSheet, View, ViewPropTypes } from 'react-native';
+const deprecatedPropType = require('react-native/Libraries/Utilities/deprecatedPropType.js');
 
 const convertPoint = (name, point) => {
   if (Array.isArray(point)) {
     console.warn(
-      `LinearGradient '${name}' property should be an object with fields 'x' and 'y', ` +
+      `LinearGradient '${name}' property shoule be an object with fields 'x' and 'y', ` +
       'Array type is deprecated.'
     );
   }
-  // TODO: Update Android native code to receive a {x, y} object, not an array
   if (point !== null && typeof point === 'object') {
     return [point.x, point.y];
   }
   return point;
 };
 
-/**
- * Checks if value is a valid number. Otherwise, defaults to defaultValue.
- *
- * @param {number} defaultValue
- */
-const validNumber = (defaultValue) => (value) => {
-  return typeof value === 'number' ? value : defaultValue;
-};
+type PropsType = {
+  start?: Array<number> | {x: number, y: number};
+  end?: Array<number> | {x: number, y: number};
+  colors: Array<string>;
+  locations?: Array<number>;
+} & typeof(View);
 
-export default class LinearGradient extends Component<Props> {
-  props: Props;
+export default class LinearGradient extends Component {
+  static propTypes = {
+    start: PropTypes.oneOfType([
+      PointPropType,
+      deprecatedPropType(
+        PropTypes.arrayOf(PropTypes.number),
+        'Use point object with {x, y} instead.'
+      )
+    ]),
+    end: PropTypes.oneOfType([
+      PointPropType,
+      deprecatedPropType(
+        PropTypes.arrayOf(PropTypes.number),
+        'Use point object with {x, y} instead.'
+      )
+    ]),
+    colors: PropTypes.arrayOf(PropTypes.string).isRequired,
+    locations: PropTypes.arrayOf(PropTypes.number),
+    ...ViewPropTypes,
+  };
+  props: PropsType;
   gradientRef: any;
 
-  static defaultProps = {
-    start: { x: 0.5, y: 0.0 },
-    end: { x: 0.5, y: 1.0 },
-  };
-
-  setNativeProps(props: Props) {
+  setNativeProps(props: PropsType) {
     this.gradientRef.setNativeProps(props);
   }
 
@@ -49,9 +57,6 @@ export default class LinearGradient extends Component<Props> {
       colors,
       end,
       locations,
-      useAngle,
-      angleCenter,
-      angle,
       start,
       style,
       ...otherProps
@@ -65,19 +70,18 @@ export default class LinearGradient extends Component<Props> {
     // https://github.com/facebook/react-native/issues/3198
     const flatStyle = StyleSheet.flatten(style) || {};
     const borderRadius = flatStyle.borderRadius || 0;
-    const validRadius = validNumber(borderRadius);
 
     // this is the format taken by:
     // http://developer.android.com/reference/android/graphics/Path.html#addRoundRect(android.graphics.RectF, float[], android.graphics.Path.Direction)
     const borderRadiiPerCorner = [
-      validRadius(flatStyle.borderTopLeftRadius),
-      validRadius(flatStyle.borderTopLeftRadius),
-      validRadius(flatStyle.borderTopRightRadius),
-      validRadius(flatStyle.borderTopRightRadius),
-      validRadius(flatStyle.borderBottomRightRadius),
-      validRadius(flatStyle.borderBottomRightRadius),
-      validRadius(flatStyle.borderBottomLeftRadius),
-      validRadius(flatStyle.borderBottomLeftRadius)
+      flatStyle.borderTopLeftRadius || borderRadius,
+      flatStyle.borderTopLeftRadius || borderRadius,
+      flatStyle.borderTopRightRadius || borderRadius,
+      flatStyle.borderTopRightRadius || borderRadius,
+      flatStyle.borderBottomRightRadius || borderRadius,
+      flatStyle.borderBottomRightRadius || borderRadius,
+      flatStyle.borderBottomLeftRadius || borderRadius,
+      flatStyle.borderBottomLeftRadius || borderRadius
     ];
 
     return (
@@ -88,9 +92,6 @@ export default class LinearGradient extends Component<Props> {
           startPoint={convertPoint('start', start)}
           endPoint={convertPoint('end', end)}
           locations={locations ? locations.slice(0, colors.length) : null}
-          useAngle={useAngle}
-          angleCenter={convertPoint('angleCenter', angleCenter)}
-          angle={angle}
           borderRadii={borderRadiiPerCorner}
         />
         { children }
@@ -98,3 +99,5 @@ export default class LinearGradient extends Component<Props> {
     );
   }
 }
+
+const NativeLinearGradient = requireNativeComponent('BVLinearGradient', null);

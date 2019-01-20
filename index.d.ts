@@ -1,18 +1,14 @@
-declare module 'react-native-linear-gradient' {
-  import * as React from 'react';
-  import * as ReactNative from 'react-native';
+import * as React from "react";
+import * as ReactNative from "react-native";
 
-  export interface LinearGradientProps extends ReactNative.ViewProps {
-    colors: (string | number)[];
-    start?: { x: number; y: number };
-    end?: { x: number; y: number };
-    locations?: number[];
-    useAngle?: boolean;
-    angleCenter?: {x: number, y: number};
-    angle?: number;
-  }
+declare module "react-native-linear-gradient" {
 
-  export class LinearGradient extends React.Component<LinearGradientProps> {}
+    interface LinearGradientProps extends ReactNative.ViewProperties {
+        colors: string[],
+        start?: { x: number, y: number },
+        end?: { x: number, y: number },
+        locations?: number[]
+    }
 
-  export default LinearGradient;
+    export default class LinearGradient extends React.Component<LinearGradientProps, any> { }
 }

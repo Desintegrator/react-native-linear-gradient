@@ -3,14 +3,14 @@
  * @flow
  */
 import React, { Component } from 'react';
-import { processColor, View } from 'react-native';
-
-import NativeLinearGradient, { type Props } from './common';
+import PropTypes from 'prop-types';
+import { processColor, requireNativeComponent, PointPropType, View, ViewPropTypes } from 'react-native';
+const deprecatedPropType = require('react-native/Libraries/Utilities/deprecatedPropType.js');
 
 const convertPoint = (name, point) => {
   if (Array.isArray(point)) {
     console.warn(
-      `LinearGradient '${name}' property should be an object with fields 'x' and 'y', ` +
+      `LinearGradient '${name}' property shoule be an object with fields 'x' and 'y', ` +
       'Array type is deprecated.'
     );
 
@@ -22,16 +22,37 @@ const convertPoint = (name, point) => {
   return point;
 };
 
-export default class LinearGradient extends Component<Props> {
-  props: Props;
+type PropsType = {
+  start?: Array<number> | {x: number, y: number};
+  end?: Array<number> | {x: number, y: number};
+  colors: Array<string>;
+  locations?: Array<number>;
+} & typeof(View);
+
+export default class LinearGradient extends Component {
+  static propTypes = {
+    start: PropTypes.oneOfType([
+      PointPropType,
+      deprecatedPropType(
+        PropTypes.arrayOf(PropTypes.number),
+        'Use point object with {x, y} instead.'
+      )
+    ]),
+    end: PropTypes.oneOfType([
+      PointPropType,
+      deprecatedPropType(
+        PropTypes.arrayOf(PropTypes.number),
+        'Use point object with {x, y} instead.'
+      )
+    ]),
+    colors: PropTypes.arrayOf(PropTypes.string).isRequired,
+    locations: PropTypes.arrayOf(PropTypes.number),
+    ...ViewPropTypes,
+  };
+  props: PropsType;
   gradientRef: any;
 
-  static defaultProps = {
-    start: { x: 0.5, y: 0.0 },
-    end: { x: 0.5, y: 1.0 },
-  };
-
-  setNativeProps(props: Props) {
+  setNativeProps(props: PropsType) {
     this.gradientRef.setNativeProps(props);
   }
 
@@ -41,9 +62,6 @@ export default class LinearGradient extends Component<Props> {
       end,
       colors,
       locations,
-      useAngle,
-      angleCenter,
-      angle,
       ...otherProps
     } = this.props;
     if ((colors && locations) && (colors.length !== locations.length)) {
@@ -58,10 +76,9 @@ export default class LinearGradient extends Component<Props> {
         endPoint={convertPoint('end', end)}
         colors={colors.map(processColor)}
         locations={locations ? locations.slice(0, colors.length) : null}
-        useAngle={useAngle}
-        angleCenter={convertPoint('angleCenter', angleCenter)}
-        angle={angle}
       />
     );
   }
 }
+
+const NativeLinearGradient = requireNativeComponent('BVLinearGradient', null);
